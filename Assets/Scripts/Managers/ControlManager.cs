@@ -5,11 +5,11 @@ using UnityEngine;
 public class ControlManager : MonoSingleton<ControlManager>
 {
     private Camera mainCamera = null;
-    private CardModule select = null;
+    private CardModule Select { get; set; } = null;
 
     public void Reset()
     {
-        select = null;
+        Select = null;
         UpdateManager.Add(UpdateControl());
     }
 
@@ -31,38 +31,38 @@ public class ControlManager : MonoSingleton<ControlManager>
                 RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction, Mathf.Infinity);
 
                 if (hit.collider == null) continue;
-                else if (select != null && hit.collider.gameObject.Equals(select.gameObject))
+                else if (Select != null && hit.collider.gameObject.Equals(Select.gameObject))
                 {
-                    select.RotateAnimation(false);
-                    select = null;
+                    Select.RotateAnimation(false);
+                    Select = null;
                 }
                 else if (hit.collider.gameObject.GetComponent<CardModule>() is CardModule newCard)
                 {
                     newCard.RotateAnimation(true);
 
                     float time = Time.time;
-                    float waitTime = select == null ?
+                    float waitTime = Select == null ?
                         CardModule.CARD_ROTATE_TIME * .5f :
                         CardModule.CARD_ROTATE_TIME;
 
                     while (Time.time - waitTime <= time)
                         yield return null;
 
-                    if (select == null)
+                        //  new Card
+                    if (Select == null) Select = newCard;
+                    else if (newCard.CardColor.Equals(Select.CardColor))
                     {
-                        select = newCard;
-                    }
-                    else if (newCard.CardColor.Equals(select.CardColor))
-                    {
-                        //  OK!
-                        select.ReleaseAnimation();
+                        //  Matching!
+                        Select.ReleaseAnimation();
                         newCard.ReleaseAnimation();
+                        Select = null;
                     }
                     else
                     {
-                        select.RotateAnimation(false);
+                        //  Miss!
+                        Select.RotateAnimation(false);
                         newCard.RotateAnimation(false);
-                        select = null;
+                        Select = null;
                     }
                 }
 
